@@ -27,9 +27,9 @@ NUM OF PLAYERS: server.dll+50F864
 */
 const DWORD dw_playerBase = 0x004C6708; //client
 const DWORD dw_enemyBase = 0x004D3904; //client
-const DWORD dw_teamOffset = 0x98; //client
+const DWORD dw_teamOffset = 0x9C; //client
 //const DWORD dw_crosshairIdOffset = 0x145C; //from player base - this gets another interesting value
-const DWORD dw_crosshairIdOffset = 0x14D4; //from player base
+const DWORD dw_crosshairIdOffset = 0x14F0; //from player base
 const DWORD dw_enemyEntityOffset = 0x10; //client
 const DWORD dw_playerCount = 0X5EF83C; //ENGINE
 
@@ -88,7 +88,6 @@ struct MyPlayer_t
 
 		//read cursor position
 		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_crosshairIdOffset), &cursorPosition, sizeof(int), 0);		
-		cout << cursorPosition << endl;
 	}
 }MyPlayer;
 
@@ -99,9 +98,8 @@ struct EnemyPlayerList_t
 
 	void ReadInformation(int player)
 	{
-		DWORD playerIndex = player * dw_enemyEntityOffset;
+		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(fProcess.__dwordClient + dw_enemyBase + (player * dw_enemyEntityOffset)), &localPlayer, sizeof(DWORD), 0);
 
-		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(fProcess.__dwordClient + dw_crosshairIdOffset + playerIndex), &localPlayer, sizeof(DWORD), 0);
 		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_teamOffset), &team, sizeof(int), 0);
 	}
 
@@ -113,16 +111,24 @@ void triggerBot()
 	bool enemyInSight = false;
 	int playerCount = getPlayerCount();
 
+	cout << "enemy team: " << EnemyPlayerList[MyPlayer.cursorPosition - 1].team << endl; 
+	cout << "my team: " << MyPlayer.team << endl; 
+
 	if (MyPlayer.cursorPosition == 0)
 		return;
-	//else if (MyPlayer.cursorPosition > playerCount)
-		//return;
-	//else if (EnemyPlayerList[MyPlayer.cursorPosition - 1].team == MyPlayer.team)
-		//return;
-	else
+	else if (MyPlayer.cursorPosition > playerCount)
+		return;
+	else if (EnemyPlayerList[MyPlayer.cursorPosition - 1].team == MyPlayer.team)
+	{
+		return;
+	}
+	else if (EnemyPlayerList[MyPlayer.cursorPosition - 1].team != MyPlayer.team) 
 	{
 		if (GetWindowTitle(hwnd).find("Counter-Strike") != string::npos)
+		{
 			LeftClick();
+			Sleep(20);
+		}
 	}
 }
 
