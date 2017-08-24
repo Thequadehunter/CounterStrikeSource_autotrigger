@@ -23,6 +23,7 @@ public:
 	DWORD __dwordVGui;
 	DWORD __dwordLibCef;
 	DWORD __dwordSteam;
+	DWORD __dwordShaderApid;
 	DWORD FindProcessName(const char *__ProcessName, PROCESSENTRY32 *pEntry)
 	{
 		PROCESSENTRY32 __ProcessEntry;
@@ -116,6 +117,7 @@ public:
 		while (__dwordEngine == 0x0) __dwordEngine = GetModuleNamePointer("engine.dll", __gameProcess.th32ProcessID);
 		//while(__dwordOverlay == 0x0) __dwordOverlay = GetModuleNamePointer("gameoverlayrenderer.dll", __gameProcess.th32ProcessID);
 		while (__dwordVGui == 0x0) __dwordVGui = GetModuleNamePointer("vguimatsurface.dll", __gameProcess.th32ProcessID);
+		while (__dwordShaderApid == 0x0) __dwordShaderApid = GetModuleNamePointer("shaderapidx9.dll", __gameProcess.th32ProcessID);
 		//while(__dwordLibCef == 0x0) __dwordLibCef = GetModuleNamePointer("libcef.dll", __gameProcess.th32ProcessID);
 		//	while(__dwordSteam == 0x0) __dwordSteam = GetModuleNamePointer("steam.dll", __gameProcess.th32ProcessID); 
 		__HWNDCss = FindWindow(NULL, "Counter-Strike Source");

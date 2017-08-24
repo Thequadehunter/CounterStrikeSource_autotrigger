@@ -30,8 +30,11 @@ const DWORD dw_enemyBase = 0x004D3904; //client
 const DWORD dw_teamOffset = 0x9C; //client
 //const DWORD dw_crosshairIdOffset = 0x145C; //from player base - this gets another interesting value
 const DWORD dw_crosshairIdOffset = 0x14F0; //from player base
+const DWORD dw_deadCheckOffSet = 0xF0;
 const DWORD dw_enemyEntityOffset = 0x10; //client
 const DWORD dw_playerCount = 0X5EF83C; //ENGINE
+const DWORD dw_inMenu = 0x00186CB0;
+const DWORD dw_menuOffset = 0x2F4;
 
 int getPlayerCount()
 {
@@ -77,8 +80,13 @@ string GetWindowTitle(HWND window)
 struct MyPlayer_t
 {
 	DWORD localPlayer;
+	DWORD menuBase;
 	int cursorPosition;
 	int team;
+	int menuInt;
+	float deadCheck;
+	bool inMenu;
+	bool isDead;
 
 	void ReadInformation()
 	{
@@ -87,7 +95,26 @@ struct MyPlayer_t
 		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_teamOffset), &team, sizeof(int), 0);
 
 		//read cursor position
-		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_crosshairIdOffset), &cursorPosition, sizeof(int), 0);		
+		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_crosshairIdOffset), &cursorPosition, sizeof(int), 0);	
+
+		//read if dead
+		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(localPlayer + dw_deadCheckOffSet), &deadCheck, sizeof(int), 0);
+
+		//read if in menu
+		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(fProcess.__dwordShaderApid + dw_inMenu), &menuBase, sizeof(DWORD), 0);
+		ReadProcessMemory(fProcess.__HandleProcess, (PBYTE*)(menuBase + dw_menuOffset), &menuInt, sizeof(int), 0);
+
+		if (menuInt == 25)
+			inMenu = false;
+		else
+			inMenu = true;
+
+		if (deadCheck != 0)
+			isDead = false;
+		else
+			isDead = true;
+
+		cout << menuInt << endl;
 	}
 }MyPlayer;
 
@@ -108,24 +135,25 @@ struct EnemyPlayerList_t
 void triggerBot()
 {
 	HWND hwnd = GetForegroundWindow();
-	bool enemyInSight = false;
 	int playerCount = getPlayerCount();
-
-	cout << "enemy team: " << EnemyPlayerList[MyPlayer.cursorPosition - 1].team << endl; 
-	cout << "my team: " << MyPlayer.team << endl; 
 
 	if (MyPlayer.cursorPosition == 0)
 		return;
 	else if (MyPlayer.cursorPosition > playerCount)
 		return;
 	else if (EnemyPlayerList[MyPlayer.cursorPosition - 1].team == MyPlayer.team)
-	{
 		return;
-	}
+	else if (MyPlayer.team == 1)
+		return;
+	else if (MyPlayer.inMenu)
+		return;
+	else if (MyPlayer.isDead)
+		return;
 	else if (EnemyPlayerList[MyPlayer.cursorPosition - 1].team != MyPlayer.team) 
 	{
 		if (GetWindowTitle(hwnd).find("Counter-Strike") != string::npos)
 		{
+			cout << "enemy team: " << EnemyPlayerList[MyPlayer.cursorPosition - 1].team << endl;
 			LeftClick();
 			Sleep(20);
 		}
